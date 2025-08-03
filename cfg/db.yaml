@@ -1,0 +1,4 @@
+reset: Yes
+host: '192.168.1.222'
+port: 27017
+db: 'lprj9_pose3d'

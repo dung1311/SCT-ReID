@@ -1,0 +1,21 @@
+TRACK_MANAGER:
+  min_hits: 3                # số frame cần để xác nhận track mới
+  min_num_embeds: 3          # số lượng embedding tối thiểu lưu cho mỗi track
+  max_num_embeds: 32         # số lượng embedding tối đa lưu cho mỗi track
+  max_fragment_frame: 30     # số frame tối đa track có thể bị mất trước khi bị xoá
+
+  join_track:
+    enable: Yes              # cho phép nối track khi bị gián đoạn
+    max_dist: 500            # khoảng cách tối đa để xét nối track
+    threshold: 0.3              # ngưỡng cosine similarity giữa các hướng nhìn
+
+  VECTORIZATION:
+    name: fast_reid
+    fast_reid:
+      model_path: ./cfg/osnet-ain_x1.0-ibn_h256w128e512_ccdmmpss.yaml  # config của FastReID
+      device: cpu
+    selection:
+      box_iou: 0.5            # IoU tối thiểu để chọn bounding box cho embedding
+      min_size: 32            # kích thước tối thiểu của bbox
+      box_ratio: 1.5          # tỉ lệ h/w để lọc bbox
+

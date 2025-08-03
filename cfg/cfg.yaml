@@ -1,0 +1,109 @@
+DETECTION:
+  name: yolov11
+  yolov11:
+    model_path: 'D:/Nguyen.Tien.Dung/sct_reid/weights/yolo11n.pt'
+    task: detect
+    imgsz: 640
+    conf_thresh: 0.3
+    iou_thresh: 0.3
+    classes: [0]  # person
+    max_det: 32
+    device: cpu
+    min_obj_h: 1
+    min_obj_w: 1
+
+POSE:
+  name: mmpose
+  mmpose:
+    model_path: /home/materials/models/mmpose/rtmpose/rtmpose-m_simcc-body7_pt-body7_420e-256x192-e48f03d0_20230504.pth
+    cfg_file: /home/materials/models/mmpose/rtmpose/rtmpose-m_8xb256-420e_body8-256x192.py
+    device: cpu
+
+POSE_3D:
+  scale_to_mm: 1
+  merge_3dpose_dist: 80
+  epi_threshold: 150 # px
+  homo_threshold: 200 # px
+  pose_conf_threshold: 0.1 
+  distance_threshold: -1
+  correct_limb_size: True
+  cosine_d_xview_thresh: 0.6
+  epi_homo_W_matching: 0.5
+  z_axis: 2
+  get_hypothesis: False
+  n_kpts: 17
+
+
+  # un-use
+  joining_dist_3dpose_tracking_thresh: 200 # mm
+  min_track_len: 0 # frames
+  last_seen_delay: 20 # max age
+  smoothing_sigma: 2
+  smoothing_intrpl_range: 5
+  do_smoothing: False # bug?
+  vizW_3dpose_tracking: 0.6
+  cosine_d_join_thresh: 0.12
+
+Tracking:
+  name: point_track
+  box_track:
+    max_age: 15
+    iou_thresh: 0.3
+    det_size: 5
+    min_hits: 2
+    iou_threshold: 0.3
+  point_track:
+    max_age: 2
+    dist_thresh: 150 # mm
+    det_size: 4
+
+TRACK_MANAGER:
+  min_hits: 3
+
+  min_num_embeds: 3
+  max_num_embeds: 32
+  max_fragment_frame: 30
+  join_track:
+    enable: Yes
+    max_dist: 500
+    
+    threshold: 0.5
+    
+
+  VECTORIZATION:
+    name: fast_reid
+    fast_reid: D:/Nguyen.Tien.Dung/sct_reid/cfg/osnet-ain_x1.0-ibn_512_256x192_ccdmmps.yaml
+    clip_onnx:
+      model_path: /home/materials/models/clipreid/ViTB16e30_h256w128e1280_ccdmmpss.onnx
+      device: cpu #cuda
+    selection:
+      box_iou: 0.5
+      min_size: 32
+      box_ratio: 1.5 # h/w
+      
+  PERSON_VIEW:
+    name: torch_classification
+    torch_classification:
+      input_size: [224, 224]
+      model_path: /home/materials/models/PersonView/Shufflenetv2_baseImageNet_personview3cls_Satudora10k.pth
+      device: 'cuda:0'
+      labels: ['front', 'side', 'back']
+
+
+VIZ:
+  enable: Yes
+  out_dir: /rd_mct/materials/outputs/
+  out_size: [960, 1080]
+  enable_3d: No
+  out_dir_3d: /rd_mct/materials/3d_debugs/
+
+
+COMMON:
+  undist: Yes
+
+GALLERY:
+  max_no_embds: 20
+  max_time: 300
+  max_live_time: 300
+  delayT_rmExitedCustomer: 5
+  max_spt_dis: 400
