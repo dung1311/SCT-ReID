@@ -1,7 +1,8 @@
 from typing import Dict, List
 
-from modules.templates.templates import TrackInfo
+from modules.templates.templates import TrackInfo, TimeSession, sTrackInfo
 from modules.matching.matching import Matching
+from modules.gallery.gallery import Gallery
 from modules.embedding.fastreid.embed import Embedding
 
 class TrackManager:
@@ -19,6 +20,8 @@ class TrackManager:
             self.max_dist_join = track_manager_config["join_track"]["max_dist"]
             self.matching = Matching(track_manager_config["join_track"])
             self._joined_tracks: Dict[int, TrackInfo] = {}
+            self.gallery = Gallery(track_manager_config["GALLERY"])
+            
         
         self.num_init = track_manager_config["min_hits"] 
         self.min_num_embeds = track_manager_config["min_num_embeds"]
@@ -28,7 +31,7 @@ class TrackManager:
     def add_new_track_to_dict(self, track_id, new_track: TrackInfo):
         self.dict_tracks[track_id] = new_track
     
-    def update_session_tracks(self, alive_tracks: List[TrackInfo], dead_tracks: List[int], frame, frame_id, timestamp):
+    def update_session_tracks(self, alive_tracks: List, dead_tracks: List[int], frame, frame_id, timestamp):
         for alive_track in alive_tracks:
             track_id = int(alive_track[-1])
             bbox = list(map(int, alive_track[:4]))
@@ -94,7 +97,14 @@ class TrackManager:
         for track_info in self.dict_tracks.values():
             if not track_info.is_dead:
                 continue
-            candidate_tracks.append(track_info)
+            start_time = track_info.start_time
+            end_time = track_info.end_time
+            time_session = TimeSession(start_time, end_time)
+            embeddings = track_info.embeddings
+            s_track_info = sTrackInfo(track_id=track_info.track_id, time_session=time_session, embeddings=embeddings)
+            customer_id = self.gallery.create_new(s_track_info)
+            self.gallery.update_one(customer_id, s_track_info)
+            candidate_tracks.append(self.gallery.customer_gallery[customer_id])
         
         match_results = self.matching.match_with_all_ids(new_track, candidate_tracks)
         

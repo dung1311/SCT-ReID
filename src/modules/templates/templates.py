@@ -37,6 +37,24 @@ class TrackInfo:
     @property
     def get_len_bboxes(self):
         return len(self.bboxes)
+    
+    def to_dict(self) -> Dict:
+        return {
+            'track_id': self.track_id,
+            'cropped_person': self.cropped_person,
+            'embeddings': self.embeddings,
+            'bboxes': self.bboxes,
+            'start_frame': self.start_frame,
+            'end_frame': self.end_frame,
+            'start_time': self.start_time.isoformat() if self.start_time else None,
+            'end_time': self.end_time.isoformat() if self.end_time else None,
+            'is_inited': self.is_inited,
+            'is_dead': self.is_dead,
+            'len_embeddings': self.get_len_embeddings(),
+            'len_bboxes': self.get_len_bboxes
+        }
+        
+    
 
 @dataclass
 class TimeSession:

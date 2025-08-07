@@ -38,6 +38,3 @@ class Matching:
             match_results.match_distance = mean_dist
         
         return match_results
-
-    
-        
