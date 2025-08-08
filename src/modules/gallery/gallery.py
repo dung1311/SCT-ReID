@@ -45,14 +45,53 @@ class Gallery:
         
         return customer_id
     
+    # def update_one(self, customer_id, track_info: sTrackInfo):
+    #     print(f"Update track {track_info.track_id} camera with cid: {customer_id}.")
+        
+    #     if customer_id in self.customer_gallery.keys():
+    #         track_session = TrackSession(track_info.track_id, track_info.time_session)
+    #         for q_embeddings in track_info.embeddings:
+    #             g_embeddings = self.customer_gallery[customer_id].embeddings
+    #             if len(g_embeddings) > 0:
+    #                 self.customer_gallery[customer_id].update_time += 1
+    #                 indices = choose_index(
+    #                     self.customer_gallery[customer_id].update_time,
+    #                     len(g_embeddings),
+    #                     len(q_embeddings),
+    #                     self.max_no_embds
+    #                 )
+    #                 print('g_embeddings', g_embeddings)
+    #                 print('q_embeddings', q_embeddings)
+    #                 all_embeds = g_embeddings + q_embeddings
+    #                 self.customer_gallery[customer_id].embeddings = all_embeds[-self.max_no_embds:]
+    #                 # self.customer_gallery[customer_id].embeddings = [all_embeds[i] for i in indices]
+    #             else:
+    #                 self.customer_gallery[customer_id].update_time = 1
+    #                 self.customer_gallery[customer_id].embeddings = q_embeddings
+            
+    #         self.customer_gallery[customer_id].sessions.append(track_session)
+    #         self.customer_gallery[customer_id].sessions.sort(key=lambda x: x.time_session.end_time)
+    #         if track_info.time_session.start_time < self.customer_gallery[customer_id].time_session.start_time:
+    #             self.customer_gallery[customer_id].time_session.start_time = track_info.time_session.start_time
+    #         if track_info.time_session.end_time > self.customer_gallery[customer_id].time_session.end_time:
+    #             self.customer_gallery[customer_id].time_session.end_time = track_info.time_session.end_time
+
     def update_one(self, customer_id, track_info: sTrackInfo):
         print(f"Update track {track_info.track_id} camera with cid: {customer_id}.")
         
         if customer_id in self.customer_gallery.keys():
             track_session = TrackSession(track_info.track_id, track_info.time_session)
+            
             for q_embeddings in track_info.embeddings:
                 g_embeddings = self.customer_gallery[customer_id].embeddings
-                if g_embeddings:
+                
+                # Đảm bảo embeddings là list các vector numpy
+                if not isinstance(g_embeddings, list):
+                    g_embeddings = [g_embeddings]
+                if not isinstance(q_embeddings, list):
+                    q_embeddings = [q_embeddings]
+                
+                if len(g_embeddings) > 0:
                     self.customer_gallery[customer_id].update_time += 1
                     indices = choose_index(
                         self.customer_gallery[customer_id].update_time,
@@ -60,16 +99,21 @@ class Gallery:
                         len(q_embeddings),
                         self.max_no_embds
                     )
+                    
+                    # Nối 2 list vector
                     all_embeds = g_embeddings + q_embeddings
-                    self.customer_gallery[customer_id].embeddings = [all_embeds[i] for i in indices]
+                    # Giữ lại max_no_embds vector cuối
+                    self.customer_gallery[customer_id].embeddings = all_embeds[-self.max_no_embds:]
                 else:
                     self.customer_gallery[customer_id].update_time = 1
                     self.customer_gallery[customer_id].embeddings = q_embeddings
             
             self.customer_gallery[customer_id].sessions.append(track_session)
             self.customer_gallery[customer_id].sessions.sort(key=lambda x: x.time_session.end_time)
+            
             if track_info.time_session.start_time < self.customer_gallery[customer_id].time_session.start_time:
                 self.customer_gallery[customer_id].time_session.start_time = track_info.time_session.start_time
             if track_info.time_session.end_time > self.customer_gallery[customer_id].time_session.end_time:
                 self.customer_gallery[customer_id].time_session.end_time = track_info.time_session.end_time
+
     

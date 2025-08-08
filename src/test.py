@@ -1,52 +1,31 @@
-import datetime
-from modules.matching.matching import Matching
-from modules.templates.templates import *
+import subprocess
+import cv2
+import numpy as np
 
-if __name__ == '__main__':
-    # Config threshold = 0.5 để lọc cosine distance nhỏ hơn 0.5
-    matching = Matching({'threshold': 0.5})
-    
-    # Tạo query giả lập
-    query = TrackInfo(track_id=1, timestamp=datetime.datetime.now(), frame_id=1)
-    query.embeddings = [
-        [0.1, 0.2, 0.3],
-        [0.2, 0.1, 0.4]
-    ]
-    
-    # Tạo nhiều gallery giả lập
-    galleries = [
-        GalleryElement(customer_id=101, embeddings=[
-            [0.1, 0.2, 0.31],
-            [0.9, 0.1, 0.0],
-            [0.2, 0.1, 0.4]
-        ], sessions=None, time_session=None),
+url = "rtsp://student:student123@192.168.1.218:7001/e8e896c9-c01d-cbf9-5af3-a6a208ea5925"
+cmd = [
+    "ffmpeg",
+    "-rtsp_transport", "tcp",
+    "-i", url,
+    "-fflags", "nobuffer",
+    "-flags", "low_delay",
+    "-an",
+    "-c:v", "rawvideo",
+    "-pix_fmt", "bgr24",
+    "-f", "rawvideo", "-"
+]
+proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
 
-        GalleryElement(customer_id=102, embeddings=[
-            [0.5, 0.5, 0.5],
-            [0.2, 0.1, 0.39]
-        ], sessions=None, time_session=None),
+w, h = 1920, 1080  # thay theo độ phân giải camera
 
-        GalleryElement(customer_id=103, embeddings=[
-            [0.1, 0.21, 0.31],
-            [0.1, 0.1, 0.1],
-            [0.2, 0.2, 0.2]
-        ], sessions=None, time_session=None),
+while True:
+    raw = proc.stdout.read(w * h * 3)
+    if not raw:
+        break
+    frame = np.frombuffer(raw, np.uint8).reshape((h, w, 3))
+    cv2.imshow("Camera", frame)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
 
-        GalleryElement(customer_id=104, embeddings=[
-            [0.9, 0.9, 0.9],
-            [0.8, 0.8, 0.8]
-        ], sessions=None, time_session=None)
-    ]
-    
-    # Chạy thử match từng gallery
-    print("=== Kết quả _match_with_one_id cho từng gallery ===")
-    for g in galleries:
-        result = matching._match_with_one_id(query, g)
-        print(f"Gallery {g.customer_id}: {result}")
-
-    # Nếu muốn xem tất cả cùng lúc và sort theo độ match
-    print("\n=== Kết quả match_with_all_ids (đã sort) ===")
-    results_all = matching.match_with_all_ids(query, galleries)
-    for r in results_all:
-        print(r)
-        
+proc.terminate()
+cv2.destroyAllWindows()

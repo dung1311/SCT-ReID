@@ -44,6 +44,7 @@ class TrackManager:
             cropped_person = crop_box(frame, bbox)
             self.dict_tracks[track_id].cropped_person.append(cropped_person)
             self.dict_tracks[track_id].bboxes.append(bbox)
+            self.dict_tracks[track_id].embeddings.append(self.embed.extract_feature(cropped_person))
             self.dict_tracks[track_id].end_frame = frame_id
             self.dict_tracks[track_id].end_time = timestamp
             
@@ -56,7 +57,7 @@ class TrackManager:
 
                 if match_track_id != -1:
                     self.recover_tracks(match_track_id, self.dict_tracks[track_id])
-                    alive_track.track_id = match_track_id
+                    # alive_track.track_id = match_track_id
                 else:
                     self.dict_tracks[track_id].is_inited = True
                     print(f"Init new track ID {self.dict_tracks[track_id].track_id}")
@@ -78,11 +79,13 @@ class TrackManager:
             self.dict_tracks.pop(track_id)
             if self.is_join_track and track_id in self._joined_tracks:
                 self._joined_tracks.pop(track_id)
-            
+        
+        return self.dict_tracks
+
     def update_embedding_of_track(self, track_id: int):
         selected_crop_persons = []
         if len(self.dict_tracks[track_id].embeddings) >= self.max_num_embeds:
-            selected_crop_persons = self.dict_tracks[track_id].embeddings[-self.max_num_embeds:]
+            selected_crop_persons = self.dict_tracks[track_id].cropped_person[-self.max_num_embeds:]
         if not selected_crop_persons:
             return
         
@@ -95,6 +98,7 @@ class TrackManager:
     def join_tracks(self, new_track: TrackInfo):
         candidate_tracks = []
         for track_info in self.dict_tracks.values():
+            self.gallery.customer_gallery.clear()
             if not track_info.is_dead:
                 continue
             start_time = track_info.start_time
@@ -123,7 +127,6 @@ class TrackManager:
         self.dict_tracks[match_track_id].is_dead = False
         self.dict_tracks[match_track_id].bboxes.extend(self.dict_tracks[new_track.track_id].bboxes)
         self.dict_tracks[match_track_id].cropped_person.extend(self.dict_tracks[new_track.track_id].cropped_person)
-        
         # remove track
         self.dict_tracks.pop(new_track.track_id)
     

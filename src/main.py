@@ -40,13 +40,16 @@ class SCRReid:
 
             frame_count += 1
             cur_time = start_time + datetime.timedelta(seconds=frame_count/self.fps)
-            # print(f'[INFO] Processing frame {frame_count}')
+            print(f'[INFO] Processing frame {frame_count}')
             l_bboxes = self.detector.detect(frame)
             dets = np.array([list(map(int, bbox)) for bbox in l_bboxes])
             alive_tracks, alive_indices, dead_tracks = self.tracker.update(dets)
-            self.track_manager.update_session_tracks(alive_tracks, dead_tracks, frame, frame_count, cur_time)
-            for track in alive_tracks:
-                x1, y1, x2, y2, _, track_id = map(int, track)
+            dict_tracks = self.track_manager.update_session_tracks(alive_tracks, dead_tracks, frame, frame_count, cur_time)
+            for track in dict_tracks.values():
+                if track.is_dead:
+                    continue
+                x1, y1, x2, y2 = map(int, track.bboxes[-1])
+                track_id = int(track.track_id)
 
                 # Vẽ bounding box
                 cv2.rectangle(frame, (x1, y1), (x2, y2), color=(0, 255, 0), thickness=2)
